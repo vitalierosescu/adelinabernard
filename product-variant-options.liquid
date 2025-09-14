@@ -21,12 +21,20 @@
   assign variants_option3_arr = product.variants | map: 'option3'
 
   assign product_form_id = 'product-form-' | append: section.id
+
+  assign color_links = product.metafields.custom.color_links.value
 -%}
 
 {%- if block.settings.picker_type == 'button' or block.settings.picker_type == 'minimal' -%}
   <div class="radio-options-wrapper">
 {%- endif -%}
 {%- for value in option.values -%}
+  {%- liquid
+    assign linked_product = nil
+    if color_links
+      assign linked_product = color_links | where: 'label', value | first
+    endif
+  -%}
   {%- liquid
     assign option_disabled = true
 
@@ -52,32 +60,44 @@
     {% if visual_variants contains option.name and swatches == true %}
       <div class="option-color-picker-wrapper">
     {% endif %}
-    <input
-      type="radio"
-      id="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
-      name="{{ option.name }}"
-      value="{{ value | escape }}"
-      {% if visual_variants contains option.name and swatches == true %}
-        class="variant-picker-colour-input swatch-style-{{ swatch_style }} picker-swatch-{{ value | handleize }}"
-      {% endif %}
-      form="{{ product_form_id }}"
-      {% if option.selected_value == value %}
-        checked
-      {% endif %}
-      {% if option_disabled %}
-        disabled
-      {% endif %}
-    >
 
-    <label
-      {% if visual_variants contains option.name and swatches == true %}
-        class="variant-picker-colour-label"
-      {% endif %}
-      for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
-    >
-      {{ value -}}
-      <span class="visually-hidden">{{ 'products.product.variant_sold_out_or_unavailable' | t }}</span>
-    </label>
+    {% if linked_product %}
+      <a
+        href="{{ routes.root_url }}/products/{{ linked_product.handle }}"
+        {% if visual_variants contains option.name and swatches == true %}
+          class="variant-picker-colour-input variant-picker-colour-label swatch-style-{{ swatch_style }} picker-swatch-{{ value | handleize }}"
+        {% endif %}
+      >
+        {{ value -}}
+      </a>
+    {% else %}
+      <input
+        type="radio"
+        id="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
+        name="{{ option.name }}"
+        value="{{ value | escape }}"
+        {% if visual_variants contains option.name and swatches == true %}
+          class="variant-picker-colour-input swatch-style-{{ swatch_style }} picker-swatch-{{ value | handleize }}"
+        {% endif %}
+        form="{{ product_form_id }}"
+        {% if option.selected_value == value %}
+          checked
+        {% endif %}
+        {% if option_disabled %}
+          disabled
+        {% endif %}
+      >
+
+      <label
+        {% if visual_variants contains option.name and swatches == true %}
+          class="variant-picker-colour-label"
+        {% endif %}
+        for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
+      >
+        {{ value -}}
+        <span class="visually-hidden">{{ 'products.product.variant_sold_out_or_unavailable' | t }}</span>
+      </label>
+    {% endif %}
 
     {% if visual_variants contains option.name and swatches == true %}</div>{% endif %}
 
